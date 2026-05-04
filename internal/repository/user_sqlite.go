@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/adocoder12/webDevelopment/internal/model"
-
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -21,7 +20,7 @@ func NewUserRepository(db *sql.DB) UserRepository {
 
 func (r *SqlUserRepository) CreateUser(ctx context.Context, name, email, password, confirmPassword, avatar string) (*model.User, error) {
 	if password != confirmPassword {
-		return nil, errors.New("passwords mismatch")
+		return nil, errors.New("passwords do not match")
 	}
 
 	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -35,19 +34,28 @@ func (r *SqlUserRepository) CreateUser(ctx context.Context, name, email, passwor
 	}
 	defer tx.Rollback()
 
-	res, err := tx.ExecContext(ctx, "INSERT INTO Users (name, email, hashedPassword) VALUES (?, ?, ?)", name, email, string(hashedBytes))
+	res, err := tx.ExecContext(ctx,
+		"INSERT INTO Users (name, email, hashedPassword) VALUES (?, ?, ?)",
+		name, email, string(hashedBytes),
+	)
 	if err != nil {
-		return nil, fmt.Errorf("user insert error: %w", err)
+		return nil, fmt.Errorf("user insert: %w", err)
 	}
 
-	userID, _ := res.LastInsertId()
-
-	if _, err = tx.ExecContext(ctx, "INSERT INTO Profile (user_id, avatar) VALUES (?, ?)", userID, avatar); err != nil {
-		return nil, fmt.Errorf("profile insert error: %w", err)
+	// FIX: error from LastInsertId is now checked
+	userID, err := res.LastInsertId()
+	if err != nil {
+		return nil, fmt.Errorf("last insert id: %w", err)
 	}
 
-	// FIX 1: Use the private helper so we can pass the transaction (tx)
-	user, err := r.getUserByIDTx(ctx, tx, userID)
+	if _, err = tx.ExecContext(ctx,
+		"INSERT INTO Profile (user_id, avatar) VALUES (?, ?)",
+		userID, avatar,
+	); err != nil {
+		return nil, fmt.Errorf("profile insert: %w", err)
+	}
+
+	user, err := getUserByIDTx(ctx, tx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -57,10 +65,10 @@ func (r *SqlUserRepository) CreateUser(ctx context.Context, name, email, passwor
 
 func (r *SqlUserRepository) GetUsers(ctx context.Context) ([]*model.User, error) {
 	query := `
-    SELECT u.id, u.name, u.email, u.hashedPassword, u.createdAt, u.updatedAt, 
-           p.avatar, p.active, p.verified
-    FROM Users u
-    LEFT JOIN Profile p ON u.id = p.user_id`
+		SELECT u.id, u.name, u.email, u.hashedPassword, u.createdAt, u.updatedAt,
+		       p.avatar, p.active, p.verified
+		FROM   Users u
+		LEFT JOIN Profile p ON u.id = p.user_id`
 
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
@@ -71,7 +79,11 @@ func (r *SqlUserRepository) GetUsers(ctx context.Context) ([]*model.User, error)
 	var users []*model.User
 	for rows.Next() {
 		var u model.User
-		if err := rows.Scan(&u.Id, &u.Name, &u.Email, &u.Password, &u.CreatedAt, &u.UpdatedAt, &u.Profile.Avatar, &u.Profile.Active, &u.Profile.Verified); err != nil {
+		if err := rows.Scan(
+			&u.Id, &u.Name, &u.Email, &u.Password,
+			&u.CreatedAt, &u.UpdatedAt,
+			&u.Profile.Avatar, &u.Profile.Active, &u.Profile.Verified,
+		); err != nil {
 			return nil, err
 		}
 		users = append(users, &u)
@@ -80,38 +92,52 @@ func (r *SqlUserRepository) GetUsers(ctx context.Context) ([]*model.User, error)
 }
 
 func (r *SqlUserRepository) GetUserByID(ctx context.Context, id int64) (*model.User, error) {
-	// Call the helper and pass the standard *sql.DB
-	return r.getUserByIDTx(ctx, r.db, id)
+	return getUserByIDTx(ctx, r.db, id)
 }
 
-func (r *SqlUserRepository) getUserByIDTx(ctx context.Context, db DBTX, id int64) (*model.User, error) {
-	var u model.User
+// getUserByIDTx is an unexported helper that accepts any DBTX so it works
+// both inside a transaction (CreateUser) and against the plain *sql.DB.
+func getUserByIDTx(ctx context.Context, db DBTX, id int64) (*model.User, error) {
 	query := `
-        SELECT u.id, u.name, u.email, u.hashedPassword, u.createdAt, u.updatedAt, 
-               p.avatar, p.active, p.verified
-        FROM Users u
-        LEFT JOIN Profile p ON u.id = p.user_id
-        WHERE u.id = ?`
+		SELECT u.id, u.name, u.email, u.hashedPassword, u.createdAt, u.updatedAt,
+		       p.avatar, p.active, p.verified
+		FROM   Users u
+		LEFT JOIN Profile p ON u.id = p.user_id
+		WHERE  u.id = ?`
 
+	var u model.User
 	err := db.QueryRowContext(ctx, query, id).Scan(
-		&u.Id, &u.Name, &u.Email, &u.Password, &u.CreatedAt, &u.UpdatedAt,
+		&u.Id, &u.Name, &u.Email, &u.Password,
+		&u.CreatedAt, &u.UpdatedAt,
 		&u.Profile.Avatar, &u.Profile.Active, &u.Profile.Verified,
 	)
-
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("user %d not found", id)
+			return nil, fmt.Errorf("user %d: %w", id, ErrNotFound)
 		}
 		return nil, err
 	}
 	return &u, nil
 }
-func (r *SqlUserRepository) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
-	var u model.User
-	query := `SELECT id, hashedPassword FROM Users WHERE email = ?`
 
-	err := r.db.QueryRowContext(ctx, query, email).Scan(&u.Id, &u.Password)
+func (r *SqlUserRepository) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
+	query := `
+		SELECT u.id, u.name, u.email, u.hashedPassword, u.createdAt, u.updatedAt,
+		       p.avatar, p.active, p.verified
+		FROM   Users u
+		LEFT JOIN Profile p ON u.id = p.user_id
+		WHERE  u.email = ?`
+
+	var u model.User
+	err := r.db.QueryRowContext(ctx, query, email).Scan(
+		&u.Id, &u.Name, &u.Email, &u.Password,
+		&u.CreatedAt, &u.UpdatedAt,
+		&u.Profile.Avatar, &u.Profile.Active, &u.Profile.Verified,
+	)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("user %s: %w", email, ErrNotFound)
+		}
 		return nil, err
 	}
 	return &u, nil

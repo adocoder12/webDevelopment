@@ -6,40 +6,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/public/css/main.css">
-  <title>{{block "title" .}}STUDIO | PROJECT{{end}}</title>
+  <title>{{block "title" .}}Family Adventure{{end}}</title>
 </head>
-<body>
+<body class="app">
 
-<header>
-  <nav>
-    <div class="nav-left">
-      <a href="/" class="logo">GO STUDIO</a>
-    </div>
-
-    <div class="nav-center">
-      <div class="nav-links">
-        <a href="/">Home</a>
-        <a href="/register">Register</a>
-        <a href="/login">Login</a>
-      </div>
-    </div>
-
-    <div class="nav-right">
-      <span class="status-indicator">
-        <span class="dot"></span> Online
-      </span>
+<header class="header">
+  <nav class="nav">
+    <a href="/" class="nav__logo">Family</a>
+    <div class="nav__group">
+      <a href="/login" class="nav__link">Log In</a>
+      <a href="/register" class="btn-midnight">Get Started</a>
     </div>
   </nav>
 </header>
 
-<main>
+<main class="main-container">
   {{template "content" .}}
 </main>
 
-<footer>
-  <p>&copy; 2026 ARCHIVE COLLECTION &bull; BUILT IN GO</p>
+<footer class="footer">
+  <p class="footer__text">&copy; 2026 Archive Collection &bull; Built in Go</p>
 </footer>
 
 </body>

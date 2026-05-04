@@ -3,28 +3,34 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"github.com/adocoder12/webDevelopment/internal/model"
 )
 
+// ErrNotFound is returned when a requested record does not exist.
+// Callers use errors.Is(err, repository.ErrNotFound) to map it to a 404.
+var ErrNotFound = errors.New("not found")
+
 var UserSchema = `
 CREATE TABLE IF NOT EXISTS Users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE,
-    hashedPassword TEXT NOT NULL,
-    createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    id             INTEGER  PRIMARY KEY AUTOINCREMENT,
+    name           TEXT     NOT NULL,
+    email          TEXT     NOT NULL UNIQUE,
+    hashedPassword TEXT     NOT NULL,
+    createdAt      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedAt      DATETIME          DEFAULT CURRENT_TIMESTAMP
 );`
 
 var ProfileSchema = `
 CREATE TABLE IF NOT EXISTS Profile (
-    user_id INTEGER PRIMARY KEY REFERENCES Users(id) ON DELETE CASCADE,
-    avatar TEXT NOT NULL,
-    active BOOLEAN NOT NULL DEFAULT 1,
+    user_id  INTEGER PRIMARY KEY REFERENCES Users(id) ON DELETE CASCADE,
+    avatar   TEXT    NOT NULL,
+    active   BOOLEAN NOT NULL DEFAULT 1,
     verified BOOLEAN NOT NULL DEFAULT 0
 );`
 
+// DBTX is satisfied by both *sql.DB and *sql.Tx.
 type DBTX interface {
 	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
 	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
@@ -34,6 +40,6 @@ type DBTX interface {
 type UserRepository interface {
 	CreateUser(ctx context.Context, name, email, password, confirmPassword, avatar string) (*model.User, error)
 	GetUsers(ctx context.Context) ([]*model.User, error)
-	GetUserByID(ctx context.Context, id int64) (*model.User, error) // Notice: I removed db DBTX here! (See note below)
+	GetUserByID(ctx context.Context, id int64) (*model.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*model.User, error)
 }

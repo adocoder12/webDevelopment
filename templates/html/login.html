@@ -1,30 +1,27 @@
 {{define "content"}}
-<div class="card">
-    <h1>Login</h1>
+<section class="hero">
+    <h1 class="hero__title hero__title--small">Welcome back</h1>
 
-    <!-- Display error message if the handler passes one -->
-    {{if .}}
-    <div style="background-color: #ffebee; color: #c62828; padding: 10px; border-radius: 4px; margin-bottom: 1rem; border: 1px solid #ef9a9a;">
-        {{.}}
-    </div>
-    {{end}}
+    <div class="family-card">
+        <form action="/login" method="POST" class="form">
+            <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input type="email" name="email" class="form-input" required placeholder="name@example.com">
+            </div>
 
-    <form action="/login" method="POST">
-        <div class="form-group">
-            <label for="email">Email Address</label>
-            <input type="email" name="email" id="email" required placeholder="name@example.com">
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" name="password" class="form-input" required>
+            </div>
+
+            <button type="submit" class="btn-midnight btn-midnight--full">Sign In</button>
+        </form>
+
+        <div class="family-card__footer">
+            <p class="footer-note">
+                New here? <a href="/register" class="link-accent">Join Family</a>
+            </p>
         </div>
-
-        <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" name="password" id="password" required placeholder="Enter your password">
-        </div>
-
-        <button type="submit" class="btn-primary">Sign In</button>
-    </form>
-
-    <div style="margin-top: 1.5rem; text-align: center;">
-        <p>Don't have an account? <a href="/register">Register here</a></p>
     </div>
-</div>
+</section>
 {{end}}

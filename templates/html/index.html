@@ -1,17 +1,18 @@
 {{define "content"}}
-<div class="card">
-    <h1>Welcome to your Go App</h1>
-    <p>This page is being rendered by your <code>renderTemplate</code> function.</p>
+<section class="hero">
+    <h1 class="hero__title">Wealth is an <br><span class="hero__accent">adventure</span>.</h1>
 
-    <hr style="border: 0; border-top: 1px solid #444; margin: 1.5rem 0;">
+    <div class="family-card">
+        <div class="family-card__content">
+            <span style="font-size: 12px; text-transform: uppercase; color: var(--color-muted); letter-spacing: 0.1em; display: block; margin-bottom: 8px;">Server Response</span>
+            <p style="font-size: 20px; font-weight: 600; color: var(--color-heading); margin: 0;">{{.}}</p>
+        </div>
 
-    <!-- Data passed from app.renderTemplate(w, "index.html", data) -->
-    <div id="content">
-        {{if .}}
-        <p><strong>Message from Server:</strong> {{.}}</p>
-        {{else}}
-        <p>No data passed to template yet.</p>
-        {{end}}
+        <a href="/register" class="btn-midnight btn-midnight--full">Start Journey</a>
+
+        <div class="family-card__footer">
+            <a href="#" class="link-accent">Watch the adventure unfold →</a>
+        </div>
     </div>
-</div>
+</section>
 {{end}}

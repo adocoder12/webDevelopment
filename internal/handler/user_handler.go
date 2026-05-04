@@ -2,41 +2,38 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
+	"github.com/adocoder12/webDevelopment/internal/repository"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func (app *Application) RegisterHandler(w http.ResponseWriter, r *http.Request) {
-	// 1. GET Request: Just show the registration page
 	if r.Method == http.MethodGet {
 		app.renderTemplate(w, "register.html", nil)
 		return
 	}
 
-	// 2. POST Request: Process the form
-	err := r.ParseForm()
-	if err != nil {
+	if err := r.ParseForm(); err != nil {
 		app.clientError(w, http.StatusBadRequest)
 		return
 	}
 
-	// Extract values from the form
-	name := r.PostForm.Get("name")
-	email := r.PostForm.Get("email")
-	password := r.PostForm.Get("password")
-	confirm := r.PostForm.Get("confirmPassword")
-
-	// 3. Call your Repository
-	_, err = app.UserRepo.CreateUser(r.Context(), name, email, password, confirm, "default_avatar.png")
+	_, err := app.UserRepo.CreateUser(
+		r.Context(),
+		r.PostForm.Get("name"),
+		r.PostForm.Get("email"),
+		r.PostForm.Get("password"),
+		r.PostForm.Get("confirmPassword"),
+		"default_avatar.png",
+	)
 	if err != nil {
-		// Render the page again with the error message
 		app.renderTemplate(w, "register.html", err.Error())
 		return
 	}
 
-	// 4. Redirect to login on success
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
@@ -46,26 +43,25 @@ func (app *Application) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	email := r.PostForm.Get("email")
-	password := r.PostForm.Get("password")
-
-	// 1. Fetch user by email
-	user, err := app.UserRepo.GetUserByEmail(r.Context(), email)
-	if err != nil {
-		app.renderTemplate(w, "login.html", "Invalid credentials")
+	if err := r.ParseForm(); err != nil {
+		app.clientError(w, http.StatusBadRequest)
 		return
 	}
 
-	// 2. Compare Bcrypt Hash
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	user, err := app.UserRepo.GetUserByEmail(r.Context(), r.PostForm.Get("email"))
 	if err != nil {
-		app.renderTemplate(w, "login.html", "Invalid credentials")
+		app.renderTemplate(w, "login.html", "Invalid email or password")
 		return
 	}
 
-	// 3. Success (Session establishment would go here)
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(r.PostForm.Get("password"))); err != nil {
+		app.renderTemplate(w, "login.html", "Invalid email or password")
+		return
+	}
+
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
+
 func (app *Application) ListUsersHandler(w http.ResponseWriter, r *http.Request) {
 	users, err := app.UserRepo.GetUsers(r.Context())
 	if err != nil {
@@ -74,27 +70,31 @@ func (app *Application) ListUsersHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(users)
+	if err := json.NewEncoder(w).Encode(users); err != nil {
+		app.serverError(w, err)
+	}
 }
 
 func (app *Application) GetByIDHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		http.Error(w, "invalid id", http.StatusBadRequest)
 		return
 	}
 
 	user, err := app.UserRepo.GetUserByID(r.Context(), id)
 	if err != nil {
+		// FIX: use sentinel error to return 404 instead of 500 for missing users
+		if errors.Is(err, repository.ErrNotFound) {
+			http.Error(w, "user not found", http.StatusNotFound)
+			return
+		}
 		app.serverError(w, err)
 		return
 	}
 
-	if user == nil {
-		http.Error(w, "User not found", http.StatusNotFound)
-		return
-	}
-
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	if err := json.NewEncoder(w).Encode(user); err != nil {
+		app.serverError(w, err)
+	}
 }

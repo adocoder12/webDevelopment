@@ -1,24 +1,39 @@
 {{define "content"}}
-<div class="card">
-    <h1>Create an Account</h1>
-    <form action="/api/v1/register" method="POST">
-        <div class="form-group">
-            <label>Name</label>
-            <input type="text" name="name" required>
+<section class="hero">
+    <!-- Uses the 40px Heading Scale -->
+    <h1 class="hero__title ">Join Family</h1>
+
+    <div class="family-card">
+        <form action="/register" method="POST" class="form">
+            <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" name="name" class="form-input" required placeholder="Alex Rivera">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-input" required placeholder="alex@family.com">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" name="password" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Confirm Password</label>
+                <input type="password" name="confirmPassword" class="form-input" required>
+            </div>
+
+            <!-- btn-midnight automatically turns Dark inside family-card -->
+            <button type="submit" class="btn-midnight btn-midnight--full">Create Account</button>
+        </form>
+
+        <div class="family-card__footer">
+            <p class="footer-note">
+                Already a member? <a href="/login" class="link-accent">Log in here</a>
+            </p>
         </div>
-        <div class="form-group">
-            <label>Email</label>
-            <input type="email" name="email" required>
-        </div>
-        <div class="form-group">
-            <label>Password</label>
-            <input type="password" name="password" required>
-        </div>
-        <div class="form-group">
-            <label>Confirm Password</label>
-            <input type="password" name="confirmPassword" required>
-        </div>
-        <button type="submit">Register</button>
-    </form>
-</div>
+    </div>
+</section>
 {{end}}

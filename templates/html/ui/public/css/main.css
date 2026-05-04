@@ -1,226 +1,232 @@
-/* --- Modern Studio Palette --- */
+/* ==========================================================
+   🌈 DESIGN TOKENS — HYBRID PRO & FAMILY
+   ========================================================== */
 :root {
-    --bg: #ffffff;             /* Pure White */
-    --surface: #fafafa;        /* Subtle Gray */
-    --text-main: #000000;      /* High Contrast Black */
-    --text-muted: #888888;     /* Refined Gray */
-    --primary: #000000;
-    --border: #e5e5e5;         /* Thin architectural lines */
-    --error: #d93025;
+    /* --- Surfaces --- */
+    --color-background: #fbfaf9;      /* Page Canvas */
+    --color-surface: #ffffff;         /* Main Card Face */
+    --color-surface-recessed: #f5f5f7;/* Input fields & Recessed containers */
+    --color-border: #f2f0ed;          /* Dividers and Inset shadows */
+
+    /* --- Elevation --- */
+    --shadow-inset: var(--color-border) 0px 0px 0px 1px inset;
+    --shadow-lift: rgba(0, 0, 0, 0.04) 0px 1px 6px 0px, rgba(0, 0, 0, 0.05) 0px 0px 24px 0px;
+
+    /* --- Typography Colors --- */
+    --color-heading: #1d1d1f;         /* Titles and Nav Logo */
+    --color-body: #474747;            /* Standard body copy */
+    --color-muted: #86868b;           /* Captions and Secondary labels */
+
+    /* --- Accents --- */
+    --color-primary: #121212;         /* Dark Hero backgrounds */
+    --color-azure: #0071e3;           /* Interactive links */
+    --color-accent: #ff3e00;          /* Brand highlights (Orange) */
+
+    /* --- Typography Scale (Pro Precision) --- */
+    --font-family-display: 'Fraunces', serif;
+    --font-family-ui: 'Inter', system-ui, sans-serif;
+
+    --fs-display: 68px;               /* Hero Headlines */
+    --fs-heading: 40px;               /* Section Headings */
+    --fs-body: 17px;                  /* Pro standard body size */
+    --fs-small: 14px;                 /* Meta text and Labels */
+
+    --tracking-display: -2.11px;      /* Tight display tracking */
+    --tracking-heading: -0.6px;       /* Medium tight tracking */
+    --tracking-body: -0.1px;          /* Natural body tracking */
+
+    /* --- Shapes --- */
+    --radius-pill: 999px;             /* Pill buttons */
+    --radius-card: 28px;              /* Deeper pro-style corners */
+    --ease-family: cubic-bezier(0.19, 1, 0.22, 1); /* Snappy spring animation */
 }
 
-/* --- Global Resets --- */
-* {
-    box-sizing: border-box;
-    -webkit-font-smoothing: antialiased;
-}
+/* --- Base Reset --- */
+* { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background-color: white;
-
-    color: var(--text-main);
-    line-height: 1.6;
+    background-color: var(--color-background);
+    color: var(--color-body);
+    font-family: var(--font-family-ui);
+    font-size: var(--fs-body);
+    line-height: 1.47;
     margin: 0;
-    display: flex;
-    flex-direction: column;
+    min-width: 320px;
+}
+
+/* --- App Viewport Grid (Sticky Footer Logic) --- */
+.app {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    width: 100%;
     min-height: 100vh;
 }
 
-/* Fixes the "ugly" purple links from Screenshot 2026-05-04 at 14.28.00.png */
-a {
-    text-decoration: none;
-    color: inherit;
-    transition: opacity 0.3s ease;
-}
-
-a:hover {
-    opacity: 0.6;
-}
-
-/* --- Navigation Header --- */
-header {
-    background-color: var(--bg);
-    padding: 2.5rem 0;
-    border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-}
-
-nav {
+.main-container {
     display: grid;
-    grid-template-columns: 1fr auto 1fr; /* Perfect balance centering */
-    align-items: center;
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 3rem;
+    gap: 52px;
     width: 100%;
-}
-
-.logo {
-    font-weight: 700;
-    font-size: 0.9rem;
-    letter-spacing: 0.4rem;
-    text-transform: uppercase;
-}
-
-.nav-links {
-    display: flex;
-    gap: 4rem; /* Adjusted from 120px for better screen compatibility */
-}
-
-.nav-links a {
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.2rem;
-    position: relative;
-    padding-bottom: 4px;
-}
-
-/* Minimalist Underline Hover Effect */
-.nav-links a::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 0%;
-    height: 1px;
-    background-color: var(--primary);
-    transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.nav-links a:hover::after {
-    width: 100%;
-}
-
-.nav-right {
-    display: flex;
-    justify-content: flex-end;
-}
-
-.status-indicator {
-    font-size: 0.6rem;
-    text-transform: uppercase;
-    letter-spacing: 0.15rem;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.dot {
-    width: 5px;
-    height: 5px;
-    background-color: #00ff00;
-    border-radius: 50%;
-    box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
-}
-
-/* --- Main Layout --- */
-main {
-    flex: 1;
     max-width: 1200px;
-    margin: 5rem auto;
-    padding: 0 2rem;
-    width: 100%;
-}
-
-.card {
-    max-width: 480px;
     margin: 0 auto;
-    padding: 2rem 0;
+    place-items: center;
+    align-content: center;
+    padding: 0 52px;
 }
 
-h1 {
-    font-weight: 300;
-    font-size: 2.4rem;
-    letter-spacing: -0.03rem;
-    margin-bottom: 3rem;
+/* --- Navigation --- */
+.header { display: flex;
+    justify-content: center; min-height: 70px; padding: 0; width: 100%;
+     }
+
+.nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+.nav__logo {
+    font-family: var(--font-family-display);
+    font-size: 26px;
+    text-decoration: none;
+    color: var(--color-heading);
+    letter-spacing: -0.5px;
+}
+
+.nav__group { display: flex; align-items: center; gap: 24px; }
+
+.nav__link {
+    text-decoration: none;
+    color: var(--color-heading);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* --- Blocks: Components --- */
+.hero {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    border-radius: var(--radius-card);
+    background-color: var(--color-primary);
+    padding: 80px 32px;
+    color: #ffffff;
     text-align: center;
 }
 
-/* --- Form Design --- */
-form {
-    display: flex;
-    flex-direction: column;
-    gap: 2.5rem;
+.hero__title {
+    font-family: var(--font-family-display);
+    font-size: var(--fs-display);
+    letter-spacing: var(--tracking-display);
+    line-height: 1.09;
+    margin: 0 0 40px;
 }
 
-.form-group {
-    display: flex;
-    flex-direction: column;
+.hero__accent { color: var(--color-accent); }
+
+.family-card {
+    background: var(--color-surface);
+    box-shadow: var(--shadow-inset);
+    border-radius: var(--radius-card);
+    padding: 40px;
+    max-width: 520px;
+    width: 100%;
+    transition: transform 0.6s var(--ease-family), box-shadow 0.6s var(--ease-family);
+    text-align: center;
 }
 
-label {
-    font-size: 0.65rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.15rem;
-    margin-bottom: 0.5rem;
-    color: var(--text-muted);
+.family-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-inset), var(--shadow-lift);
 }
 
-input {
-    background: transparent;
+.family-card__content {
+    background: var(--color-surface-recessed);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 32px;
+    border: 1px solid var(--color-border);
+    text-align: left;
+}
+
+/* --- Interaction: Buttons & Forms --- */
+.btn-midnight {
+    background-color: #ffffff;
+    color: var(--color-heading);
+    border-radius: var(--radius-pill);
+    padding: 12px 28px;
+    font-size: 17px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    justify-content: center;
     border: none;
-    border-bottom: 1px solid var(--border);
-    border-radius: 0;
-    padding: 0.8rem 0;
-    color: var(--text-main);
-    font-size: 1rem;
-    transition: border-color 0.4s ease;
-}
-
-input:focus {
-    outline: none;
-    border-bottom-color: var(--primary);
-}
-
-/* --- Studio Buttons --- */
-button[type="submit"], .btn-primary {
-    background-color: var(--primary);
-    color: #ffffff;
-    border: 1px solid var(--primary);
-    border-radius: 0;
-    padding: 1.2rem;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.3rem;
     cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
-    margin-top: 1.5rem;
+    transition: opacity 0.2s ease, transform 0.2s var(--ease-family);
 }
 
-button[type="submit"]:hover {
-    background-color: transparent;
-    color: var(--primary);
+.family-card .btn-midnight {
+    background-color: var(--color-heading);
+    color: #ffffff;
+}
+
+.btn-midnight:hover { opacity: 0.9; transform: scale(1.02); }
+.btn-midnight--full { width: 100%; }
+
+.form-group { margin-bottom: 24px; text-align: left; }
+
+.form-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-heading);
+    margin-bottom: 10px;
+}
+
+.form-input {
+    width: 100%;
+    background: var(--color-surface-recessed);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 14px;
+    font-size: var(--fs-body);
+    outline: none;
+    font-family: var(--font-family-ui);
+    transition: border-color 0.2s ease;
+}
+
+.form-input:focus {
+    border-color: var(--color-muted);
+    box-shadow: 0 0 0 4px var(--color-border);
+}
+
+.link-accent {
+    color: var(--color-azure);
+    text-decoration: none;
+    font-weight: 500;
 }
 
 /* --- Footer --- */
-footer {
-    padding: 5rem 0;
-    border-top: 1px solid var(--border);
+.footer {
+    padding: 120px 0 80px;
     text-align: center;
+    border-top: 1px solid var(--color-border);
+    width: 100%;
 }
 
-footer p {
-    font-size: 0.6rem;
+.footer__text {
+    font-size: 12px;
+    color: var(--color-muted);
     text-transform: uppercase;
-    letter-spacing: 0.2rem;
-    color: var(--text-muted);
+    letter-spacing: 1px;
 }
-
-/* --- Error Box --- */
-.error-box {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1rem;
-    color: var(--error);
-    text-align: center;
-    margin-bottom: 2rem;
-    border: 1px solid var(--error);
-    padding: 1rem;
+.footer-note {
+    font-size: 14px;
+    color: var(--color-muted);
+    margin: 0;
 }

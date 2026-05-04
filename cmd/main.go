@@ -23,7 +23,7 @@ func main() {
 
 	// 2. Database Initialization
 	// SQLite with foreign keys enabled is vital for data integrity.
-	db, err := sql.Open("sqlite3", "app.db?_foreign_keys=on")
+	db, err := sql.Open("sqlite3", "./app.db?_foreign_keys=on")
 	if err != nil {
 		errorLog.Fatal(err)
 	}
