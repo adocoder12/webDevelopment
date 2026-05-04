@@ -1,0 +1,32 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Path matches your SetupRoutes: /public/ maps to ./templates/html/ui/public/ -->
+  <link rel="stylesheet" href="/public/css/main.css">
+  <title>Go Web App</title>
+</head>
+<body>
+
+<header>
+  <nav>
+    <a href="/" class="logo">GoProject</a>
+    <div>
+      <small>Server Status: Online</small>
+    </div>
+  </nav>
+</header>
+
+<main>
+  {{template "content" .}}
+</main>
+
+<footer>
+  &copy; 2026 Go Web Development | Built with Go & HTML5
+</footer>
+
+</body>
+</html>
+{{end}}
