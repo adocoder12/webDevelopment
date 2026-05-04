@@ -106,3 +106,13 @@ func (r *SqlUserRepository) getUserByIDTx(ctx context.Context, db DBTX, id int64
 	}
 	return &u, nil
 }
+func (r *SqlUserRepository) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
+	var u model.User
+	query := `SELECT id, hashedPassword FROM Users WHERE email = ?`
+
+	err := r.db.QueryRowContext(ctx, query, email).Scan(&u.Id, &u.Password)
+	if err != nil {
+		return nil, err
+	}
+	return &u, nil
+}

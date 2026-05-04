@@ -30,6 +30,21 @@ func NewApplication(
 }
 
 func (app *Application) serverError(w http.ResponseWriter, err error) {
-	app.ErrorLog.Printf("%v", err)
-	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	// 1. Log the detailed error for the developer (private)
+	// We use Printf with %+v to get as much detail as possible
+	app.ErrorLog.Printf("%+v", err)
+
+	// 2. Send a generic message to the user (public)
+	// Never show raw DB or system errors to the user
+	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+}
+
+func (app *Application) clientError(w http.ResponseWriter, status int) {
+	// Standardized way to send 400, 401, 403, etc.
+	http.Error(w, http.StatusText(status), status)
+}
+
+func (app *Application) notFound(w http.ResponseWriter) {
+	// Specialized helper for 404s
+	app.clientError(w, http.StatusNotFound)
 }

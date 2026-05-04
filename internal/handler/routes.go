@@ -1,26 +1,30 @@
 package handler
 
-import (
-	"net/http"
-)
+import "net/http"
 
 // SetupRoutes attaches all your URLs to the Application
 func (app *Application) SetupRoutes() *http.ServeMux {
 	mux := http.NewServeMux()
 
-	// 1. Static File Server
-	// Ensure this points to your actual CSS/Assets directory
+	// Static Files
 	publicDir := "./templates/html/ui/public"
+
 	fileServer := http.FileServer(http.Dir(publicDir))
+
+	// This tells Go: when the browser asks for "/public/...",
+	// look inside the publicDir folder.
 	mux.Handle("/public/", http.StripPrefix("/public", fileServer))
 
-	// 2. The Fix: Add '{$}' to the root pattern
+	// Web Pages
 	mux.HandleFunc("GET /{$}", app.Home)
 
-	// 3. API Routes
-	mux.HandleFunc("POST /api/v1/register", app.RegisterHandler)
-	mux.HandleFunc("GET /api/v1/users", app.ListUsersHandler)
-	mux.HandleFunc("GET /api/v1/users/{id}", app.GetByIDHandler)
+	// Registration Routes
+	mux.HandleFunc("GET /register", app.RegisterHandler)  // Show form
+	mux.HandleFunc("POST /register", app.RegisterHandler) // Process form
+
+	// Login Routes
+	mux.HandleFunc("GET /login", app.LoginHandler)  // Show form
+	mux.HandleFunc("POST /login", app.LoginHandler) // Process form
 
 	return mux
 }

@@ -35,4 +35,5 @@ type UserRepository interface {
 	CreateUser(ctx context.Context, name, email, password, confirmPassword, avatar string) (*model.User, error)
 	GetUsers(ctx context.Context) ([]*model.User, error)
 	GetUserByID(ctx context.Context, id int64) (*model.User, error) // Notice: I removed db DBTX here! (See note below)
+	GetUserByEmail(ctx context.Context, email string) (*model.User, error)
 }

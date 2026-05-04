@@ -4,17 +4,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Path matches your SetupRoutes: /public/ maps to ./templates/html/ui/public/ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/public/css/main.css">
-  <title>Go Web App</title>
+  <title>{{block "title" .}}STUDIO | PROJECT{{end}}</title>
 </head>
 <body>
 
 <header>
   <nav>
-    <a href="/" class="logo">GoProject</a>
-    <div>
-      <small>Server Status: Online</small>
+    <div class="nav-left">
+      <a href="/" class="logo">GO STUDIO</a>
+    </div>
+
+    <div class="nav-center">
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/register">Register</a>
+        <a href="/login">Login</a>
+      </div>
+    </div>
+
+    <div class="nav-right">
+      <span class="status-indicator">
+        <span class="dot"></span> Online
+      </span>
     </div>
   </nav>
 </header>
@@ -24,7 +39,7 @@
 </main>
 
 <footer>
-  &copy; 2026 Go Web Development | Built with Go & HTML5
+  <p>&copy; 2026 ARCHIVE COLLECTION &bull; BUILT IN GO</p>
 </footer>
 
 </body>
