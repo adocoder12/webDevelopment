@@ -7,7 +7,7 @@
 # --- Go Binaries & Artifacts ---
 # This ignores the compiled executable created by 'go build'
 /bin/
-main
+
 *.exe
 *.exe~
 *.dll
