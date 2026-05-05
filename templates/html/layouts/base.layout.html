@@ -16,8 +16,15 @@
   <nav class="nav">
     <a href="/" class="nav__logo">Family</a>
     <div class="nav__group">
+      {{if .IsAuthenticated}}
+      <span class="nav__link">Hi, {{.UserName}}</span>
+      <form action="/logout" method="POST" style="display:inline">
+        <button type="submit" class="btn-midnight">Log Out</button>
+      </form>
+      {{else}}
       <a href="/login" class="nav__link">Log In</a>
       <a href="/register" class="btn-midnight">Get Started</a>
+      {{end}}
     </div>
   </nav>
 </header>

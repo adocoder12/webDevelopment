@@ -29,6 +29,13 @@ CREATE TABLE IF NOT EXISTS Profile (
     active   BOOLEAN NOT NULL DEFAULT 1,
     verified BOOLEAN NOT NULL DEFAULT 0
 );`
+var SessionSchema = `
+CREATE TABLE IF NOT EXISTS Sessions (
+    token  TEXT PRIMARY KEY,
+    data   BLOB NOT NULL,
+    expiry REAL NOT NULL
+);
+CREATE INDEX IF NOT EXISTS sessions_expiry_idx ON Sessions(expiry);`
 
 // DBTX is satisfied by both *sql.DB and *sql.Tx.
 type DBTX interface {

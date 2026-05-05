@@ -10,9 +10,27 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// -- Flash & auth helpers ---------------------------------------------------
+
+func (app *Application) setFlash(r *http.Request, msg string) {
+	//Put to store
+	app.SessionManager.Put(r.Context(), "flash", msg)
+}
+
+func (app *Application) getFlash(r *http.Request) string {
+	//PopString to read-and-delete in one call.
+	return app.SessionManager.PopString(r.Context(), "flash")
+}
+
+func (app *Application) isAuthenticated(r *http.Request) bool {
+	return app.SessionManager.GetInt64(r.Context(), "userID") != 0
+}
+
+// -- Handlers ---------------------------------------------------------------
+
 func (app *Application) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		app.renderTemplate(w, "register.html", nil)
+		app.renderTemplate(w, r, "register.html", nil)
 		return
 	}
 
@@ -30,16 +48,19 @@ func (app *Application) RegisterHandler(w http.ResponseWriter, r *http.Request) 
 		"default_avatar.png",
 	)
 	if err != nil {
-		app.renderTemplate(w, "register.html", err.Error())
+		app.renderTemplate(w, r, "register.html", &TemplateData{
+			Error: err.Error(),
+		})
 		return
 	}
 
+	app.setFlash(r, "Account created! Please log in.")
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
 func (app *Application) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		app.renderTemplate(w, "login.html", nil)
+		app.renderTemplate(w, r, "login.html", nil)
 		return
 	}
 
@@ -50,16 +71,41 @@ func (app *Application) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, err := app.UserRepo.GetUserByEmail(r.Context(), r.PostForm.Get("email"))
 	if err != nil {
-		app.renderTemplate(w, "login.html", "Invalid email or password")
+		app.renderTemplate(w, r, "login.html", &TemplateData{
+			Error: "Invalid email or password",
+		})
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(r.PostForm.Get("password"))); err != nil {
-		app.renderTemplate(w, "login.html", "Invalid email or password")
+		app.renderTemplate(w, r, "login.html", &TemplateData{
+			Error: "Invalid email or password",
+		})
+		return
+	}
+	//This prevents "session fixation" — an attack where someone steals your token before you log in and then reuses it after
+	if err := app.SessionManager.RenewToken(r.Context()); err != nil {
+		app.serverError(w, err)
 		return
 	}
 
+	app.SessionManager.Put(r.Context(), "userID", user.Id)
+	app.SessionManager.Put(r.Context(), "userName", user.Name)
+	app.setFlash(r, "Welcome back, "+user.Name+"!")
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (app *Application) LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	//This prevents "session fixation" — an attack where someone steals your token before you log in and then reuses it after
+	if err := app.SessionManager.RenewToken(r.Context()); err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	app.SessionManager.Remove(r.Context(), "userID")
+	app.SessionManager.Remove(r.Context(), "userName")
+	app.setFlash(r, "You have been logged out.")
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
 func (app *Application) ListUsersHandler(w http.ResponseWriter, r *http.Request) {
@@ -84,7 +130,6 @@ func (app *Application) GetByIDHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, err := app.UserRepo.GetUserByID(r.Context(), id)
 	if err != nil {
-		// FIX: use sentinel error to return 404 instead of 500 for missing users
 		if errors.Is(err, repository.ErrNotFound) {
 			http.Error(w, "user not found", http.StatusNotFound)
 			return

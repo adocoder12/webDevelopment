@@ -10,13 +10,23 @@ import (
 
 type TemplateRenderer struct {
 	Cache       map[string]*template.Template
-	Mutex       sync.RWMutex // Use RWMutex for better performance
+	Mutex       sync.RWMutex
 	Dev         bool
 	TemplateDir string
 }
 
+// TemplateData is the standard envelope passed to every template.
+// Handler-specific data (Flash, Error, page content) goes in Content.
+type TemplateData struct {
+	IsAuthenticated bool
+	UserName        string
+	Flash           string
+	Error           string
+	Content         any
+}
+
 // NewTemplateRenderer initializes the specialist.
-// It pre-parses if not in Dev mode.
+// It pre-parses all templates if not in Dev mode.
 func NewTemplateRenderer(dir string, isDev bool) (*TemplateRenderer, error) {
 	renderer := &TemplateRenderer{
 		Cache:       make(map[string]*template.Template),
@@ -29,7 +39,6 @@ func NewTemplateRenderer(dir string, isDev bool) (*TemplateRenderer, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		for _, page := range pages {
 			name := filepath.Base(page)
 			ts, err := template.ParseFiles(page)
@@ -43,28 +52,53 @@ func NewTemplateRenderer(dir string, isDev bool) (*TemplateRenderer, error) {
 	return renderer, nil
 }
 
-// renderTemplate now uses the Renderer specialist
-func (app *Application) renderTemplate(w http.ResponseWriter, filename string, data any) {
+// newTemplateData builds the base data envelope for every render,
+// automatically injecting auth state from the session.
+func (app *Application) newTemplateData(r *http.Request) *TemplateData {
+	td := &TemplateData{
+		IsAuthenticated: app.isAuthenticated(r),
+		Flash:           app.getFlash(r),
+	}
+
+	// If logged in, fetch the username from the session
+	if td.IsAuthenticated {
+		td.UserName = app.SessionManager.GetString(r.Context(), "userName")
+	}
+
+	return td
+}
+
+// renderTemplate executes a named template with the standard data envelope.
+// Pass handler-specific data via td.Content, td.Error, etc. after calling
+// newTemplateData.
+func (app *Application) renderTemplate(w http.ResponseWriter, r *http.Request, filename string, td *TemplateData) {
+	// Always start from a fresh base envelope so auth state is never stale
+	if td == nil {
+		td = app.newTemplateData(r)
+	} else {
+		// Inject auth state into the caller-supplied envelope
+		td.IsAuthenticated = app.isAuthenticated(r)
+		td.UserName = app.SessionManager.GetString(r.Context(), "userName")
+		if td.Flash == "" {
+			td.Flash = app.getFlash(r)
+		}
+	}
+
 	var tmpl *template.Template
 	var ok bool
-	var err error // Pre-declare err to avoid scope issues
+	var err error
 
-	// 1. Thread-safe check of the cache
 	app.Renderer.Mutex.RLock()
 	tmpl, ok = app.Renderer.Cache[filename]
 	app.Renderer.Mutex.RUnlock()
 
-	// 2. Logic for missing cache or Dev Mode
 	if !ok || app.Renderer.Dev {
-
-		// Use '=' here, not ':=' to update the variable declared at the top
 		tmpl, err = app.Renderer.ParseTemplate(filename)
 		if err != nil {
 			app.serverError(w, fmt.Errorf("could not parse template %s: %w", filename, err))
 			return
 		}
 
-		// 3. Update cache if not in Dev mode
 		if !app.Renderer.Dev {
 			app.Renderer.Mutex.Lock()
 			if _, exists := app.Renderer.Cache[filename]; !exists {
@@ -74,9 +108,7 @@ func (app *Application) renderTemplate(w http.ResponseWriter, filename string, d
 		}
 	}
 
-	// 4. Execute the template
-	err = tmpl.ExecuteTemplate(w, "base", data)
-	if err != nil {
+	if err = tmpl.ExecuteTemplate(w, "base", td); err != nil {
 		app.serverError(w, fmt.Errorf("could not execute template %s: %w", filename, err))
 	}
 }
@@ -89,7 +121,6 @@ func (tr *TemplateRenderer) ParseTemplate(filename string) (*template.Template, 
 		return nil, fmt.Errorf("could not parse page %s: %w", filename, err)
 	}
 
-	// Check for layouts
 	layoutPattern := filepath.Join(tr.TemplateDir, "layouts/*.layout.html")
 	matches, _ := filepath.Glob(layoutPattern)
 	if len(matches) > 0 {
@@ -99,7 +130,6 @@ func (tr *TemplateRenderer) ParseTemplate(filename string) (*template.Template, 
 		}
 	}
 
-	// Check for partials
 	partialPattern := filepath.Join(tr.TemplateDir, "partials/*.partial.html")
 	matches, _ = filepath.Glob(partialPattern)
 	if len(matches) > 0 {

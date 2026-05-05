@@ -156,7 +156,7 @@ body {
 
 /* --- Interaction: Buttons & Forms --- */
 .btn-midnight {
-    background-color: #ffffff;
+    background-color:  var(--color-muted);
     color: var(--color-heading);
     border-radius: var(--radius-pill);
     padding: 12px 28px;
@@ -209,6 +209,27 @@ body {
     color: var(--color-azure);
     text-decoration: none;
     font-weight: 500;
+}
+/* --- Feedback Messages --- */
+.feedback {
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: var(--fs-small);
+    font-weight: 500;
+    margin-bottom: 24px;
+    text-align: left;
+}
+
+.feedback--success {
+    background-color: #f0faf4;
+    color: #1a7f4b;
+    border: 1px solid #b7eacf;
+}
+
+.feedback--error {
+    background-color: #fff4f2;
+    color: #c0392b;
+    border: 1px solid #ffd5ce;
 }
 
 /* --- Footer --- */

@@ -3,6 +3,15 @@
     <h1 class="hero__title hero__title--small">Welcome back</h1>
 
     <div class="family-card">
+
+        {{if .Flash}}
+        <div class="feedback feedback--success">{{.Flash}}</div>
+        {{end}}
+
+        {{if .Error}}
+        <div class="feedback feedback--error">{{.Error}}</div>
+        {{end}}
+
         <form action="/login" method="POST" class="form">
             <div class="form-group">
                 <label class="form-label">Email Address</label>

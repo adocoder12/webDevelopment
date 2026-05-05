@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,6 +11,9 @@ import (
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
+
+	"github.com/alexedwards/scs/sqlite3store"
+	"github.com/alexedwards/scs/v2"
 
 	"github.com/adocoder12/webDevelopment/internal/handler"
 	"github.com/adocoder12/webDevelopment/internal/repository"
@@ -40,12 +44,17 @@ func main() {
 	infoLog.Println("Database connection established!")
 
 	// 4. Schema Migration/Verification
-	ctx := context.Background()
-	if _, err := db.ExecContext(ctx, repository.UserSchema); err != nil {
+	ctxMigrate, cancelMigrate := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancelMigrate()
+
+	if _, err := db.ExecContext(ctxMigrate, repository.UserSchema); err != nil {
 		errorLog.Fatal(fmt.Errorf("failed to create users table: %w", err))
 	}
-	if _, err := db.ExecContext(ctx, repository.ProfileSchema); err != nil {
+	if _, err := db.ExecContext(ctxMigrate, repository.ProfileSchema); err != nil {
 		errorLog.Fatal(fmt.Errorf("failed to create profile table: %w", err))
+	}
+	if _, err := db.ExecContext(ctxMigrate, repository.SessionSchema); err != nil {
+		errorLog.Fatal(fmt.Errorf("failed to create sessions table: %w", err))
 	}
 
 	// 5. Specialist Initialization
@@ -55,9 +64,19 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
+	// 6. Session Manager
+	sessionStore := sqlite3store.New(db)
+	defer sessionStore.StopCleanup()
+	sessionManager := scs.New()
+	sessionManager.Store = sessionStore
+	sessionManager.Lifetime = 12 * time.Hour
+	sessionManager.Cookie.Secure = false // set true in production (HTTPS only)
+	sessionManager.Cookie.SameSite = http.SameSiteLaxMode
+	// after creating sessionStore
+
 	// 6. Dependency Injection
 	userRepo := repository.NewUserRepository(db)
-	app := handler.NewApplication(errorLog, infoLog, userRepo, renderer)
+	app := handler.NewApplication(errorLog, infoLog, userRepo, renderer, sessionManager)
 
 	// 7. Configured HTTP Server
 	// Using the http.Server struct allows for timeouts that prevent DDoS/leaks.
@@ -71,6 +90,7 @@ func main() {
 	}
 
 	infoLog.Println("Server running on :8280")
-	err = srv.ListenAndServe()
-	errorLog.Fatal(err)
+	if err := srv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+		errorLog.Fatal(err)
+	}
 }

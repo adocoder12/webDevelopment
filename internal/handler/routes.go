@@ -3,28 +3,24 @@ package handler
 import "net/http"
 
 // SetupRoutes attaches all your URLs to the Application
-func (app *Application) SetupRoutes() *http.ServeMux {
+func (app *Application) SetupRoutes() http.Handler {
 	mux := http.NewServeMux()
 
 	// Static Files
 	publicDir := "./templates/html/ui/public"
-
 	fileServer := http.FileServer(http.Dir(publicDir))
-
-	// This tells Go: when the browser asks for "/public/...",
-	// look inside the publicDir folder.
 	mux.Handle("/public/", http.StripPrefix("/public", fileServer))
 
-	// Web Pages
+	// Public routes
 	mux.HandleFunc("GET /{$}", app.Home)
+	mux.HandleFunc("GET /register", app.RegisterHandler)
+	mux.HandleFunc("POST /register", app.RegisterHandler)
+	mux.HandleFunc("GET /login", app.LoginHandler)
+	mux.HandleFunc("POST /login", app.LoginHandler)
+	mux.HandleFunc("POST /logout", app.LogoutHandler)
 
-	// Registration Routes
-	mux.HandleFunc("GET /register", app.RegisterHandler)  // Show form
-	mux.HandleFunc("POST /register", app.RegisterHandler) // Process form
+	// Protected routes (add these later)
+	// mux.HandleFunc("GET /dashboard", app.AuthRequired(app.Dashboard))
 
-	// Login Routes
-	mux.HandleFunc("GET /login", app.LoginHandler)  // Show form
-	mux.HandleFunc("POST /login", app.LoginHandler) // Process form
-
-	return mux
+	return app.RecoverPanic(app.SessionManager.LoadAndSave(app.Logger(mux)))
 }
