@@ -1,0 +1,23 @@
+# --- IDEs & Editors ---
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# --- Go Binaries & Artifacts ---
+# This ignores the compiled executable created by 'go build'
+/bin/
+main
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
+
+# --- Environment & Sensitive Data ---
+# If you ever use a .env file for database secrets, keep it out of Git!
+.env
