@@ -9,3 +9,5 @@ require (
 )
 
 require github.com/alexedwards/scs/v2 v2.9.0
+
+require github.com/joho/godotenv v1.5.1 // indirect

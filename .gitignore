@@ -18,6 +18,15 @@
 .DS_Store
 Thumbs.db
 
+# --- Go Test & Coverage ---
+*.test
+*.out
+
+# --- SQLite Database ---
+*.db
+*.db-shm
+*.db-wal
+
 # --- Environment & Sensitive Data ---
 # If you ever use a .env file for database secrets, keep it out of Git!
 .env
